@@ -136,13 +136,7 @@ func setupBenchmarkNexusCore(b *testing.B, plugins map[string]Plugin) (*NexusCor
 	logger := zerolog.New(os.Stdout).With().Logger()
 	taskStateQueue := NewMockRedisTaskStateQueue(redisClient, "test_queue")
 	args := NexusCoreBackendArgs{
-		Redis: struct {
-			Username   string
-			Password   string
-			Url        string
-			Db         int
-			SocketPath string
-		}{
+		Redis: RedisArgs{
 			Username:   "",
 			Password:   "",
 			Url:        "localhost:6379",
@@ -191,13 +185,7 @@ func setupTestNexusCore(t *testing.T, plugins map[string]Plugin) (*NexusCore, co
 	taskStateQueue := NewMockRedisTaskStateQueue(redisClient, "test_queue")
 
 	args := NexusCoreBackendArgs{
-		Redis: struct {
-			Username   string
-			Password   string
-			Url        string
-			Db         int
-			SocketPath string
-		}{
+		Redis: RedisArgs{
 			Username:   "",
 			Password:   "",
 			Url:        "localhost:6379",

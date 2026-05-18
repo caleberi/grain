@@ -87,12 +87,12 @@ type Plugin interface {
 // PluginMeta contains metadata for a plugin, including its name, version, and
 // JSON schemas for arguments and UI forms.
 type PluginMeta struct {
+	Data           map[string]any  `json:"metadata"`         // Additional plugin-specific metadata.
 	Name           string          `json:"name"`             // Unique identifier in "pluginName.PluginName" format (e.g., "notification.SendAlert").
 	Description    string          `json:"description"`      // Brief description of the plugin's functionality.
-	Version        int             `json:"version"`          // Version number, incremented for schema changes.
 	ArgsSchemaJSON json.RawMessage `json:"args_schema_json"` // JSON schema for validating plugin arguments.
 	FormSchemaJSON json.RawMessage `json:"form_schema_json"` // JSON schema for rendering the plugin's UI form.
-	Data           map[string]any  `json:"metadata"`         // Additional plugin-specific metadata.
+	Version        int             `json:"version"`          // Version number, incremented for schema changes.
 }
 
 // ID returns the plugin's unique identifier in "name:version" format (e.g.,
@@ -151,48 +151,49 @@ type Stream struct {
 //
 // . wg.Wait()
 type NexusCore struct {
+	Logger     zerolog.Logger     // Logger for recording nexus-core activities.
 	ctx        context.Context    // Context for cancellation and timeouts.
 	cancelFunc context.CancelFunc // Function to cancel the nexus-core context.
 
-	Plugins                      map[string]Plugin              // Maps event types to their plugin implementations.
-	pluginSemaphores             map[string]*semaphore.Weighted // Limits concurrent plugin executions per event type.
-	taskIDs                      map[string]string              // Tracks registered task IDs by delegation type.
+	Plugins          map[string]Plugin              // Maps event types to their plugin implementations.
+	pluginSemaphores map[string]*semaphore.Weighted // Limits concurrent plugin executions per event type.
+	taskIDs          map[string]string              // Tracks registered task IDs by delegation type.
+
+	Backend                      *machinery.Server // Machinery server for task queuing and execution.
+	storage                      *NexusFlow        // Manages event queue and persistent storage.
+	stream                       *Stream
+	wg                           *sync.WaitGroup
 	maxPluginConcurrentExecution int64
 
-	Backend *machinery.Server // Machinery server for task queuing and execution.
-	Logger  zerolog.Logger    // Logger for recording nexus-core activities.
-	storage *NexusFlow        // Manages event queue and persistent storage.
-	stream  *Stream
-	wg      *sync.WaitGroup
-	mu      sync.Mutex
+	mu sync.Mutex
 }
 
 type RedisArgs struct { // Redis configuration for broker and backend.
 	Username   string // Authentication username for Redis.
 	Password   string // Authentication password for Redis.
 	Url        string // Redis server URL (e.g., "redis://localhost:6379").
-	Db         int    // Redis database number.
 	SocketPath string // Optional Unix socket path for Redis.
+	Db         int    // Redis database number.
 }
 
 // NexusCoreBackendArgs configures the NexusCore orchestrator, including Machinery
 // server, event storage, and plugin settings.
 type NexusCoreBackendArgs struct {
-	Redis                           RedisArgs
-	Plugins                         map[string]Plugin // Maps event types to plugin implementations.
 	Logger                          zerolog.Logger    // Logger for orchestrator activities.
 	Broker                          bkf.Broker        // Broker for task queuing (e.g., Redis).
 	Backend                         bkdif.Backend     // Backend for task result storage (e.g., Redis).
 	TaskProcessor                   bkf.TaskProcessor // Custom task processor (currently unused).
-	MongoDbClient                   *mongo.Client     // MongoDB client for event persistence.
-	DebugMode                       bool              // Enables debug logging when true.
-	MaxPluginWorkers                int               // Maximum concurrent plugin routines.
 	TaskStateQueue                  TaskStateQueue    // Manages task state persistence (e.g., Redis queue).
+	Plugins                         map[string]Plugin // Maps event types to plugin implementations.
+	MongoDbClient                   *mongo.Client     // MongoDB client for event persistence.
 	Conf                            *config.Config    // Machinery configuration; uses defaults if nil.
+	Redis                           RedisArgs
+	MaxPluginWorkers                int // Maximum concurrent plugin routines.
 	MaxFlowQueueLength              int
 	ScanAndFixFlowInterval          time.Duration
 	StreamCapacity                  int
 	MaxConcurrentPluginPerExecution int64
+	DebugMode                       bool // Enables debug logging when true.
 }
 
 // NewNexusCore initializes a new NexusCore instance for event orchestration.

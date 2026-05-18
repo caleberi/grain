@@ -93,15 +93,16 @@ var gzipWriterPool = sync.Pool{
 
 // Value represents the data stored in the cache along with metadata
 type Value struct {
+	StoredTime time.Time // When the value was stored
+	SyncTime   time.Time // Last sync time
+	Data       any       // The actual cached data
+
+	CheckSum   string        // SHA-256 checksum of original data
+	Compressed []byte        // Compressed version of data
 	ExpireIn   time.Duration // Duration until expiration
-	StoredTime time.Time     // When the value was stored
-	SyncTime   time.Time     // Last sync time
-	Data       any           // The actual cached data
 
 	// For data optimization for large data
-	DataSize   int    // Size of original data in bytes
-	CheckSum   string // SHA-256 checksum of original data
-	Compressed []byte // Compressed version of data
+	DataSize int // Size of original data in bytes
 }
 
 // syncHistoryStat stores statistics about cache sync operations
@@ -114,37 +115,39 @@ type syncHistoryStat struct {
 // RedisCache provides a two-level caching system with Redis as the primary storage
 // and an in-memory cache for faster access
 type RedisCache struct {
-	InternalCache            *redis.Client
 	logger                   zerolog.Logger
+	ctx                      context.Context
+	InternalCache            *redis.Client
 	resourceCache            map[string]Value
-	resourceMutex            sync.RWMutex
+	expiryEWMAThresholds     map[string]time.Duration
+	cancel                   context.CancelFunc
+	syncHistoryTrend         []syncHistoryStat
 	syncDuration             time.Duration
 	percentageInMemoryTime   float64
 	compressionThresholdInMB int
 
 	syncHistorySampleSize int
-	syncHistoryTrendMutex sync.Mutex
-	syncHistoryTrend      []syncHistoryStat
 	syncHistoryIndex      int
 	syncHistoryCount      int
 
-	expiryEWMA           float64
-	expiryEWMAThresholds map[string]time.Duration
-	alpha                float64
+	expiryEWMA float64
+	alpha      float64
 
 	maxCacheEntries int
 	memoryCapMB     int
 	trimRatio       float64
 
-	skipCompression bool
+	resourceMutex sync.RWMutex
 
-	isShutdown sync.Once
-	ctx        context.Context
-	cancel     context.CancelFunc
+	isShutdown            sync.Once
+	syncHistoryTrendMutex sync.Mutex
+
+	skipCompression bool
 }
 
 // RedisConfig contains configuration for the Redis cache
 type RedisConfig struct {
+	Logger                   zerolog.Logger
 	Addr                     string
 	Username                 string
 	Password                 string
@@ -154,7 +157,6 @@ type RedisConfig struct {
 	PercentageInMemoryTime   float64
 	TrimRatio                float64
 	SyncDuration             time.Duration
-	Logger                   zerolog.Logger
 	Alpha                    float64
 	SyncHistorySampleSize    int
 	CompressionThresholdInMB int
@@ -299,8 +301,8 @@ func (rd *RedisCache) trimCacheBySyncTime(ratio float64) {
 	}
 
 	type entry struct {
-		key string
 		t   time.Time
+		key string
 	}
 	var entries []entry
 	for k, v := range rd.resourceCache {

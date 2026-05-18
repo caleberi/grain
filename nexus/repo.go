@@ -438,9 +438,8 @@ func (r *Repository[T]) Reconcile(ctx context.Context, document T, filter bson.M
 func (r *Repository[T]) GetClient() *mongo.Client { return r.client }
 
 func (r *Repository[T]) WrapWithTransaction(
-	ctx context.Context,
-	data T, callback func(ctx mongo.SessionContext, repo *Repository[T], data T) error,
-	sessionOpts ...*options.SessionOptions) error {
+	ctx context.Context, data T,
+	callback func(ctx mongo.SessionContext, repo *Repository[T], data T) error, sessionOpts ...*options.SessionOptions) error {
 	session, err := r.GetClient().StartSession(sessionOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to start session : %w", err)

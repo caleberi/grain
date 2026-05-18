@@ -206,28 +206,28 @@ type NexusFlowComponentState struct {
 // It implements lease-based concurrency control to ensure events are processed uniquely and
 // supports a dead-letter queue for events exceeding retry limits.
 type NexusFlow struct {
+	logger             zerolog.Logger           // Logger for tracking operations and errors.
 	ctx                context.Context          // Context for managing cancellation and timeouts.
 	cancelFunc         context.CancelFunc       // Function to cancel the context.
-	eventQueueKey      string                   // Redis key used for the event queue.
 	client             *redis.Client            // Redis client for queue operations.
-	logger             zerolog.Logger           // Logger for tracking operations and errors.
-	leaseTTL           time.Duration            // Duration for which an event lease is valid.
 	repo               *Repository[EventDetail] // MongoDB repository for storing event details.
-	maxQueueLength     int                      // Maximum number of events allowed in the Redis queue.
-	operationTimeout   time.Duration            // Timeout duration for database and Redis operations.
-	clientInfo         mongoClientInfo          // MongoDB client configuration (replica set or standalone).
-	resolutionInterval time.Duration            // Interval for scanning and fixing expired leases.
 	errCh              chan error
+	eventQueueKey      string        // Redis key used for the event queue.
+	leaseTTL           time.Duration // Duration for which an event lease is valid.
+	maxQueueLength     int           // Maximum number of events allowed in the Redis queue.
+	operationTimeout   time.Duration // Timeout duration for database and Redis operations.
+	resolutionInterval time.Duration // Interval for scanning and fixing expired leases.
 	mu                 sync.RWMutex
+	clientInfo         mongoClientInfo // MongoDB client configuration (replica set or standalone).
 }
 
 // NexusFlowArgs holds configuration parameters for initializing a NexusFlow instance.
 type NexusFlowArgs struct {
-	Key                 string         // Redis key for the event queue.
-	Client              *redis.Client  // Redis client for queue operations.
 	Logger              zerolog.Logger // Logger for recording operations and errors.
-	LeaseTTL            time.Duration  // Duration for lease validity; defaults to 30 seconds if zero.
+	Client              *redis.Client  // Redis client for queue operations.
 	DbClient            *mongo.Client  // MongoDB client for database operations.
+	Key                 string         // Redis key for the event queue.
+	LeaseTTL            time.Duration  // Duration for lease validity; defaults to 30 seconds if zero.
 	OperationTimeout    time.Duration  // Timeout duration for operations.
 	ScanAndFixInterval  time.Duration  // Interval for scanning and fixing expired leases.
 	MaxAttemptsPerEvent int            // Maximum retry attempts per event.

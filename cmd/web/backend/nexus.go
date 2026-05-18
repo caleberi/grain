@@ -25,14 +25,14 @@ type Config struct {
 }
 
 type NexusWebServer struct {
-	config Config
+	logger zerolog.Logger
 	fiber  *fiber.App
 	redis  *redis.Client
 	mongo  *mongo.Client
 	nexus  *nexus.NexusCore
 
 	taskStateStreamer *TaskStateStreamer
-	logger            zerolog.Logger
+	config            Config
 }
 
 func (a *NexusWebServer) Shutdown() error {

@@ -33,8 +33,8 @@ func loadPlugin(file string) (Plugin, error) {
 }
 
 type PluginLoader struct {
-	pluginPath string
 	plugins    map[string]Plugin
+	pluginPath string
 	mu         sync.RWMutex
 }
 

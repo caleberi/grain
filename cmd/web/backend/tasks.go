@@ -15,8 +15,8 @@ import (
 )
 
 type TaskStateStreamer struct {
-	mu          sync.RWMutex
 	subscribers map[chan []byte]struct{}
+	mu          sync.RWMutex
 }
 
 func NewTaskStateStreamer() *TaskStateStreamer {

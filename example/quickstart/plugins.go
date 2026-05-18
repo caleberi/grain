@@ -25,10 +25,10 @@ import (
 type MandelbrotGeneratorPlugin struct{}
 
 type MandelbrotArgs struct {
-	Width    int     `json:"width"`
-	Height   int     `json:"height"`
 	Filename string  `json:"filename"`
 	Format   string  `json:"format"` // "png" or "gif"
+	Width    int     `json:"width"`
+	Height   int     `json:"height"`
 	CenterX  float64 `json:"centerX"`
 	CenterY  float64 `json:"centerY"`
 	Zoom     float64 `json:"zoom"`
@@ -189,8 +189,8 @@ func (a *MandelbrotArgs) unimplemented() {}
 type FileMapPlugin struct{}
 
 type FileMapArgs struct {
-	Filenames []string `json:"filenames"`
 	Operation string   `json:"operation"` // "wordcount", "linecount", "charcount"
+	Filenames []string `json:"filenames"`
 }
 
 func (p *FileMapPlugin) Meta() nexus.PluginMeta {
@@ -211,9 +211,9 @@ func (p *FileMapPlugin) Meta() nexus.PluginMeta {
 
 func (p *FileMapPlugin) Execute(ctx context.Context, args FileMapArgs) (string, error) {
 	type result struct {
+		err      error
 		filename string
 		count    int
-		err      error
 	}
 
 	results := make(chan result, len(args.Filenames))
@@ -271,8 +271,8 @@ func (a *FileMapArgs) unimplemented() {}
 type FileReducePlugin struct{}
 
 type FileReduceArgs struct {
-	Filenames []string `json:"filenames"`
 	Operation string   `json:"operation"` // "sum", "avg", "max", "min"
+	Filenames []string `json:"filenames"`
 }
 
 func (p *FileReducePlugin) Meta() nexus.PluginMeta {

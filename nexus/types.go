@@ -42,25 +42,25 @@ const (
 type PluginTask = func(ctx context.Context, argsJsonArg string) (any, error)
 
 type EventDetail struct {
-	Id             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	State          string             `json:"state,omitempty" bson:"state,omitempty,omitzero"`
-	Payload        string             `json:"payload,omitempty" bson:"payload,omitempty,omitzero"`
-	Result         string             `json:"result,omitempty" bson:"result,omitempty,omitzero"`
-	Attempts       int                `json:"attempts" bson:"attempts,omitzero"`
-	MaxAttempts    int                `json:"max_attempts" bson:"max_attempts,omitzero"`
 	CreatedAt      time.Time          `json:"created_at,omitzero" bson:"created_at,omitzero"`
 	UpdatedAt      time.Time          `json:"updated_at,omitzero" bson:"updated_at,omitzero"`
 	CompletedAt    *time.Time         `json:"completed_at,omitzero" bson:"completed_at,omitzero"`
+	Eta            *time.Time         `json:"eta,omitzero" bson:"eta,omitzero"`
+	State          string             `json:"state,omitempty" bson:"state,omitempty,omitzero"`
+	Payload        string             `json:"payload,omitempty" bson:"payload,omitempty,omitzero"`
+	Result         string             `json:"result,omitempty" bson:"result,omitempty,omitzero"`
 	ErrorMessage   string             `json:"error,omitempty" bson:"error,omitempty,omitzero"`
 	DelegationType string             `json:"delegation_type" bson:"delegation_type,omitzero"`
+	Attempts       int                `json:"attempts" bson:"attempts,omitzero"`
+	MaxAttempts    int                `json:"max_attempts" bson:"max_attempts,omitzero"`
 	Version        int                `json:"version" bson:"version,omitzero"`
+	RetryCount     int                `json:"retry_count,omitzero" bson:"retry_count,omitzero"`
+	RetryTimeout   int                `json:"retry_timeout,omitzero" bson:"retry_timeout,omitzero"`
+	Id             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Stored         bool               `json:"stored" bson:"stored,omitzero"`
 	Queued         bool               `json:"queued" bson:"queued,omitzero"`
 	Dead           bool               `json:"dead" bson:"dead,omitzero"`
 	Priority       uint8              `json:"priority,omitzero" bson:"priority,omitzero"`
-	RetryCount     int                `json:"retry_count,omitzero" bson:"retry_count,omitzero"`
-	RetryTimeout   int                `json:"retry_timeout,omitzero" bson:"retry_timeout,omitzero"`
-	Eta            *time.Time         `json:"eta,omitzero" bson:"eta,omitzero"`
 }
 
 // EventDetailBuilder is a builder for EventDetail
@@ -345,13 +345,15 @@ type TaskStateQueue interface {
 }
 
 type TaskResult struct {
-	Type  string `json:"type" bson:"type"`
 	Value any    `json:"value" bson:"value"`
+	Type  string `json:"type" bson:"type"`
 }
 
 // TaskState represents the state of a task, including its identifier, status,
 // result, completion status, and last update time.
 type TaskState struct {
+	// UpdatedAt records the timestamp of the last state update.
+	UpdatedAt time.Time `json:"updatedAt"`
 	// Id is a unique identifier for the task.
 	Id string `json:"id"`
 	// EventId is a unique identifier for the event associated with the task.
@@ -363,6 +365,4 @@ type TaskState struct {
 	Result []TaskResult `json:"result"`
 	// Completed indicates whether the task is completed.
 	Completed bool `json:"completed"`
-	// UpdatedAt records the timestamp of the last state update.
-	UpdatedAt time.Time `json:"updatedAt"`
 }

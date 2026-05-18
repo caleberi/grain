@@ -13,10 +13,10 @@ import (
 )
 
 type PluginBuilder struct {
-	dirPath   string
 	glob      glob.Glob
 	errChan   chan error
 	filePaths chan string
+	dirPath   string
 }
 
 func NewPluginBuilder(dirPath string, fileGlob string) (*PluginBuilder, error) {

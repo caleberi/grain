@@ -26,9 +26,9 @@ type PluginMetadata struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	Code         string `json:"code"`
+	CompiledPath string `json:"compiledPath"`
 	CreatedAt    int64  `json:"createdAt"`
 	CompiledAt   int64  `json:"compiledAt"`
-	CompiledPath string `json:"compiledPath"`
 }
 
 const (
